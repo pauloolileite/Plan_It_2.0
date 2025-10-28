@@ -1,5 +1,9 @@
 package raven.modal.demo.auth;
 
+import Controller.UsuarioController; // Importar seu Controller
+import Model.TipoUsuario; // Importar seu Enum
+import Model.Usuario; // Importar seu Model
+import Utils.DatabaseConnection; // Importar sua classe de conexão
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.component.DropShadowBorder;
@@ -11,14 +15,29 @@ import raven.modal.demo.system.FormManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection; // Importar Connection
+import java.sql.SQLException; // Importar SQLException
 
 public class Login extends Form {
+
+    // 1. Declarar o UsuarioController como variável da classe
+    private UsuarioController usuarioController;
 
     public Login() {
         init();
     }
 
     private void init() {
+        // 2. Inicializar o Controller (assumindo que DatabaseConnection.getConexao() funciona)
+        try {
+            Connection conexao = DatabaseConnection.getConnection();
+            this.usuarioController = new UsuarioController(conexao);
+        } catch (Exception e) {
+            // Em caso de falha na conexão, exibe o erro e impede o login
+            JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco de dados: " + e.getMessage(), "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
+            // Poderia desabilitar os campos ou o botão aqui
+        }
+
         setLayout(new MigLayout("al center center"));
         createLogin();
     }
@@ -88,13 +107,53 @@ public class Login extends Form {
         panelLogin.add(loginContent);
         add(panelLogin);
 
-        // event
+        // --- 3. LÓGICA DE LOGIN MODIFICADA ---
         cmdLogin.addActionListener(e -> {
+            // Verifica se o controller foi inicializado
+            if (this.usuarioController == null) {
+                JOptionPane.showMessageDialog(Login.this, "Controlador de usuário não inicializado. Verifique a conexão com o banco.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             String userName = txtUsername.getText();
             String password = String.valueOf(txtPassword.getPassword());
-            ModelUser user = getUser(userName, password);
-            MyDrawerBuilder.getInstance().setUser(user);
-            FormManager.login();
+
+            try {
+                // Chama o backend real para autenticar
+                Usuario usuarioAutenticado = usuarioController.autenticarUsuario(userName, password);
+
+                // Se chegou aqui, o login foi bem-sucedido
+
+                // 4. Adaptar Model.Usuario (Backend) para ModelUser (Frontend)
+                // O ModelUser da interface espera (nome, email, role)
+                // O Model.Usuario do backend tem (username, tipo)
+                // Vamos adaptar:
+
+                // Mapeia o TipoUsuario (backend) para ModelUser.Role (frontend)
+                ModelUser.Role role;
+                if (usuarioAutenticado.getTipo() == TipoUsuario.ADMINISTRADOR) {
+                    role = ModelUser.Role.ADMIN;
+                } else {
+                    role = ModelUser.Role.STAFF; // Assume STAFF para FUNCIONARIO ou outros
+                }
+
+                // ATENÇÃO: Seu Model.Usuario não tem 'email'. Usaremos um placeholder.
+                // O ideal seria adicionar 'nome' e 'email' ao Model.Usuario no backend.
+                String nomeUsuario = usuarioAutenticado.getUsername(); // Usando username como nome
+                String emailUsuario = "email@placeholder.com"; // Email não existe no backend
+
+                ModelUser userParaUI = new ModelUser(nomeUsuario, emailUsuario, role);
+
+                // Continua o fluxo da interface
+                MyDrawerBuilder.getInstance().setUser(userParaUI);
+                FormManager.login();
+
+            } catch (SQLException | IllegalArgumentException ex) {
+                // Captura erros de "Usuário ou senha inválidos" ou erros de SQL
+                JOptionPane.showMessageDialog(Login.this, ex.getMessage(), "Erro de Login", JOptionPane.ERROR_MESSAGE);
+                // Limpa a senha por segurança
+                txtPassword.setText("");
+            }
         });
     }
 
@@ -111,7 +170,7 @@ public class Login extends Form {
 
         // event
         lbLink.addOnClick(e -> {
-
+            // Ação futura
         });
         return panelInfo;
     }
@@ -122,15 +181,6 @@ public class Login extends Form {
         }
     }
 
-    private ModelUser getUser(String user, String password) {
-
-        // just testing.
-        // input any user and password is admin by default
-        // user='staff' password='123' if we want to test validation menu for role staff
-
-        if (user.equals("staff") && password.equals("123")) {
-            return new ModelUser("Justin White", "justinwhite@gmail.com", ModelUser.Role.STAFF);
-        }
-        return new ModelUser("Ra Ven", "raven@gmail.com", ModelUser.Role.ADMIN);
-    }
+    // 5. O MÉTODO DE TESTE (getUser) FOI REMOVIDO.
+    // private ModelUser getUser(String user, String password) { ... }
 }

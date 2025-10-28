@@ -1,7 +1,5 @@
 package Model;
 
-import java.sql.Date;
-
 public class Agendamento {
     private int id;
     private Cliente cliente;
@@ -41,5 +39,4 @@ public class Agendamento {
 
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
-
 }
