@@ -1,50 +1,50 @@
 package raven.modal.demo.auth;
 
-// Removidos imports do Controller, Model e Utils que não serão usados temporariamente
-// import Controller.UsuarioController;
-// import Model.TipoUsuario;
-// import Model.Usuario;
-// import Utils.DatabaseConnection;
+import Controller.UsuarioController; // Importar seu Controller
+import Model.TipoUsuario; // Importar seu Enum
+import Model.Usuario; // Importar seu Model
+import Utils.DatabaseConnection; // Importar sua classe de conexão
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
+import raven.modal.Toast; // Import correto do Toast
 import raven.modal.component.DropShadowBorder;
 import raven.modal.demo.component.LabelButton;
 import raven.modal.demo.menu.MyDrawerBuilder;
-import raven.modal.demo.model.ModelUser; // ModelUser ainda é necessário para a UI
+import raven.modal.demo.model.ModelUser;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.system.FormManager;
 
 import javax.swing.*;
 import java.awt.*;
-// Removidos imports de SQL que não serão usados temporariamente
-// import java.sql.Connection;
-// import java.sql.SQLException;
+import java.sql.Connection; // Importar Connection
+import java.sql.SQLException; // Importar SQLException
 
 public class Login extends Form {
 
-    // Comentado o UsuarioController
-    // private UsuarioController usuarioController;
+    private UsuarioController usuarioController;
+    private boolean databaseConnectionFailed = false; // Flag para erro de conexão
 
     public Login() {
         init();
     }
 
     private void init() {
-        // Comentada a inicialização do Controller e a conexão com o banco
-        /*
         try {
-            Connection conexao = DatabaseConnection.getConnection();
+            Connection conexao = DatabaseConnection.getConnection(); // Usar o método estático correto
             if (conexao == null) {
-                throw new SQLException("Falha ao obter conexão com o banco de dados.");
+                throw new SQLException("Falha ao obter conexão com o banco de dados (retornou null).");
             }
             this.usuarioController = new UsuarioController(conexao);
+            System.out.println("Conexão com banco de dados estabelecida para Login."); // Log de sucesso
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco de dados: " + e.getMessage(), "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
+            databaseConnectionFailed = true; // Marca que a conexão falhou
+            showDatabaseConnectionError("Erro SQL: " + e.getMessage()); // Exibe erro detalhado
+            e.printStackTrace(); // Loga o stack trace completo no console
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro inesperado na inicialização: " + e.getMessage(), "Erro Geral", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+            databaseConnectionFailed = true; // Marca que a conexão falhou
+            showUnexpectedError("Erro Inesperado: " + e.getMessage()); // Exibe erro detalhado
+            e.printStackTrace(); // Loga o stack trace completo no console
         }
-        */
 
         setLayout(new MigLayout("al center center"));
         createLogin();
@@ -65,8 +65,7 @@ public class Login extends Form {
 
         JLabel lbTitle = new JLabel("Welcome back!");
         JLabel lbDescription = new JLabel("Please sign in to access your account");
-        lbTitle.putClientProperty(FlatClientProperties.STYLE, "" +
-                "font:bold +12;");
+        lbTitle.putClientProperty(FlatClientProperties.STYLE, "font:bold +12;");
 
         loginContent.add(lbTitle);
         loginContent.add(lbDescription);
@@ -81,31 +80,17 @@ public class Login extends Form {
             }
         };
 
-        // style
+        // Estilos...
         txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your username or email");
         txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your password");
-
-        panelLogin.putClientProperty(FlatClientProperties.STYLE, "" +
-                "[dark]background:tint($Panel.background,1%);");
-
-        loginContent.putClientProperty(FlatClientProperties.STYLE, "" +
-                "background:null;");
-
-        txtUsername.putClientProperty(FlatClientProperties.STYLE, "" +
-                "margin:4,10,4,10;" +
-                "arc:12;");
-        txtPassword.putClientProperty(FlatClientProperties.STYLE, "" +
-                "margin:4,10,4,10;" +
-                "arc:12;" +
-                "showRevealButton:true;");
-
-        cmdLogin.putClientProperty(FlatClientProperties.STYLE, "" +
-                "margin:4,10,4,10;" +
-                "arc:12;");
+        panelLogin.putClientProperty(FlatClientProperties.STYLE, "[dark]background:tint($Panel.background,1%);");
+        loginContent.putClientProperty(FlatClientProperties.STYLE, "background:null;");
+        txtUsername.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;arc:12;");
+        txtPassword.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;arc:12;showRevealButton:true;");
+        cmdLogin.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;arc:12;");
 
         loginContent.add(new JLabel("Username"), "gapy 25");
         loginContent.add(txtUsername);
-
         loginContent.add(new JLabel("Password"), "gapy 10");
         loginContent.add(txtPassword);
         loginContent.add(chRememberMe);
@@ -115,22 +100,10 @@ public class Login extends Form {
         panelLogin.add(loginContent);
         add(panelLogin);
 
-        // --- LÓGICA DE LOGIN TEMPORÁRIA (SEM AUTENTICAÇÃO) ---
+        // Ação do botão Login
         cmdLogin.addActionListener(e -> {
-            System.out.println("Autenticação pulada para desenvolvimento."); // Mensagem no console
-
-            // Cria um usuário FALSO (ADMIN) para permitir acesso
-            // (Você pode mudar para STAFF se quiser testar permissões de funcionário)
-            ModelUser userFalso = new ModelUser("Usuário Teste", "teste@dev.com", ModelUser.Role.ADMIN);
-
-            // Continua o fluxo da interface com o usuário falso
-            MyDrawerBuilder.getInstance().setUser(userFalso);
-            FormManager.login();
-
-            // O código original de autenticação foi comentado abaixo:
-            /*
-            if (this.usuarioController == null) {
-                JOptionPane.showMessageDialog(Login.this, "Controlador de usuário não inicializado. Verifique a conexão com o banco.", "Erro", JOptionPane.ERROR_MESSAGE);
+            if (databaseConnectionFailed || this.usuarioController == null) {
+                showControllerNotInitializedWarning();
                 return;
             }
 
@@ -140,15 +113,9 @@ public class Login extends Form {
             try {
                 Usuario usuarioAutenticado = usuarioController.autenticarUsuario(userName, password);
 
-                ModelUser.Role role;
-                if (usuarioAutenticado.getTipo() == TipoUsuario.ADMINISTRADOR) {
-                    role = ModelUser.Role.ADMIN;
-                } else {
-                    role = ModelUser.Role.STAFF;
-                }
-
+                ModelUser.Role role = (usuarioAutenticado.getTipo() == TipoUsuario.ADMINISTRADOR) ? ModelUser.Role.ADMIN : ModelUser.Role.STAFF;
                 String nomeUsuario = usuarioAutenticado.getUsername();
-                String emailUsuario = "email@placeholder.com";
+                String emailUsuario = "email@placeholder.com"; // Placeholder
 
                 ModelUser userParaUI = new ModelUser(nomeUsuario, emailUsuario, role);
 
@@ -156,33 +123,34 @@ public class Login extends Form {
                 FormManager.login();
 
             } catch (SQLException ex) {
-                 JOptionPane.showMessageDialog(Login.this, "Erro no banco de dados: " + ex.getMessage(), "Erro de Banco", JOptionPane.ERROR_MESSAGE);
-                 ex.printStackTrace();
-                 txtPassword.setText("");
+                showDatabaseOperationError("Erro no banco ao autenticar: " + ex.getMessage());
+                ex.printStackTrace();
+                txtPassword.setText("");
             } catch (IllegalArgumentException ex) {
-                 JOptionPane.showMessageDialog(Login.this, ex.getMessage(), "Erro de Login", JOptionPane.WARNING_MESSAGE);
-                 txtPassword.setText("");
-             } catch (Exception ex) {
-                 JOptionPane.showMessageDialog(Login.this, "Ocorreu um erro inesperado: " + ex.getMessage(), "Erro Desconhecido", JOptionPane.ERROR_MESSAGE);
-                 ex.printStackTrace();
-                 txtPassword.setText("");
-             }
-             */
+                JOptionPane.showMessageDialog(Login.this, ex.getMessage(), "Erro de Login", JOptionPane.WARNING_MESSAGE);
+                txtPassword.setText("");
+            } catch (Exception ex) {
+                showUnexpectedError("Erro inesperado ao autenticar: " + ex.getMessage());
+                ex.printStackTrace();
+                txtPassword.setText("");
+            }
         });
+
+        // Desabilita campos se conexão falhou na inicialização
+        if (databaseConnectionFailed) {
+            txtUsername.setEnabled(false);
+            txtPassword.setEnabled(false);
+            cmdLogin.setEnabled(false);
+        }
     }
 
     private JPanel createInfo() {
         JPanel panelInfo = new JPanel(new MigLayout("wrap,al center", "[center]"));
-        panelInfo.putClientProperty(FlatClientProperties.STYLE, "" +
-                "background:null;");
-
+        panelInfo.putClientProperty(FlatClientProperties.STYLE, "background:null;");
         panelInfo.add(new JLabel("Don't remember your account details?"));
         panelInfo.add(new JLabel("Contact us at"), "split 2");
         LabelButton lbLink = new LabelButton("help@info.com");
-
         panelInfo.add(lbLink);
-
-        // event
         lbLink.addOnClick(e -> {
             JOptionPane.showMessageDialog(Login.this, "Funcionalidade de recuperação de conta ainda não implementada.");
         });
@@ -193,5 +161,27 @@ public class Login extends Form {
         if (panel != null) {
             panel.setBorder(new DropShadowBorder(new Insets(5, 8, 12, 8), 1, 25));
         }
+    }
+
+    // --- Métodos de Feedback ---
+    private void showDatabaseConnectionError(String message) {
+        JOptionPane.showMessageDialog(this,
+                "Não foi possível conectar ao banco de dados na inicialização.\n" + message +
+                        "\nVerifique se o servidor MySQL está rodando e as configurações (db.properties) estão corretas.",
+                "Erro Crítico de Conexão", JOptionPane.ERROR_MESSAGE);
+    }
+    private void showDatabaseOperationError(String message) {
+        if(getRootPane() != null) Toast.show(this.getRootPane(), Toast.Type.ERROR, message);
+        else System.err.println("Erro DB: " + message);
+    }
+    private void showUnexpectedError(String message) {
+        JOptionPane.showMessageDialog(this,
+                "Ocorreu um erro inesperado:\n" + message,
+                "Erro Inesperado", JOptionPane.ERROR_MESSAGE);
+    }
+    private void showControllerNotInitializedWarning() {
+        JOptionPane.showMessageDialog(this,
+                "A conexão com o banco de dados falhou na inicialização.\nNão é possível realizar o login.",
+                "Falha na Conexão", JOptionPane.WARNING_MESSAGE);
     }
 }
