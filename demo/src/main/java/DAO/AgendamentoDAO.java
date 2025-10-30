@@ -3,9 +3,16 @@ package DAO;
 import Model.Agendamento;
 import Model.Cliente;
 import Model.Funcionario;
+import Utils.DatabaseConnection;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class AgendamentoDAO {
     private final Connection conexao;
@@ -134,4 +141,25 @@ public class AgendamentoDAO {
         stmt.close();
         return lista;
     }
+
+    public double totalFaturamentoMesAtual() throws SQLException {
+        String sql =
+                "SELECT COALESCE(SUM(s.preco), 0) AS total " +
+                        "FROM agendamento a " +
+                        "JOIN servico s ON s.id = a.id_servico " +
+                        "WHERE YEAR(a.data) = YEAR(CURDATE()) " +
+                        "  AND MONTH(a.data) = MONTH(CURDATE())";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                BigDecimal total = rs.getBigDecimal("total");
+                return (total != null) ? total.doubleValue() : 0d;
+            }
+            return 0d;
+        }
+    }
+
 }

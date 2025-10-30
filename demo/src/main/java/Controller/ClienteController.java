@@ -5,6 +5,7 @@ import Model.Cliente;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.sql.SQLException;
 
 public class ClienteController {
     private final ClienteDAO clienteDAO;
@@ -46,4 +47,9 @@ public class ClienteController {
     public void excluirCliente(int id) throws SQLException {
         clienteDAO.excluir(id);
     }
+
+    //public int contarClientes() throws SQLException {
+        //ClienteDAO dao = new ClienteDAO();
+        //return dao.contarClientes();
+    //}
 }

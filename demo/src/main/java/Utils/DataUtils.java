@@ -31,4 +31,12 @@ public class DataUtils {
     public static String formatar(Date data, String formato) {
         return new SimpleDateFormat(formato).format(data);
     }
+
+    public static String formatarParaISO(Date data) {
+        if (data == null) return "";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.format(data);
+    }
+
+
 }

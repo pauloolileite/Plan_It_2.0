@@ -71,4 +71,9 @@ public class AgendamentoController {
         if (data == null) throw new IllegalArgumentException("Data deve ser informada.");
         if (hora == null || hora.isEmpty()) throw new IllegalArgumentException("Hora deve ser informada.");
     }
+
+    //public double totalFaturamentoMesAtual() throws SQLException {
+       // AgendamentoDAO dao = new AgendamentoDAO();
+     //   return dao.totalFaturamentoMesAtual();
+   // }
 }

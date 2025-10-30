@@ -37,4 +37,5 @@ public class Demo extends JFrame {
         DemoPreferences.setupLaf();
         EventQueue.invokeLater(() -> new Demo().setVisible(true));
     }
+
 }

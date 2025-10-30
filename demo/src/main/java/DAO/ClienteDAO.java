@@ -1,9 +1,15 @@
 package DAO;
 
 import Model.Cliente;
+import Utils.DatabaseConnection;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class ClienteDAO {
     private final Connection conexao;
@@ -72,5 +78,19 @@ public class ClienteDAO {
         stmt.setInt(1, id);
         stmt.executeUpdate();
         stmt.close();
+    }
+
+    public int contarClientes() throws SQLException {
+        String sql = "SELECT COUNT(*) AS total FROM cliente";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+            return 0;
+        }
     }
 }
